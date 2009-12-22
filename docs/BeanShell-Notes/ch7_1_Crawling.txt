@@ -1,0 +1,10 @@
+// Crawling for News 
+String rootDir = Ch7Constants.CRAWL_DATA_ROOT_DIR;
+
+NewsCrawler crawler = new NewsCrawler(rootDir, 2, 100);
+
+crawler.addSeedUrl("http://www.manning.com/");
+
+crawler.run();
+
+

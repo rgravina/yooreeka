@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="iweb2" default="dist" basedir=".">
+
+     
+<!-- set global properties for this build -->
+<property name="project.Name" value="Algorithms of the Intelligent Web"/>
+<property name="iweb2.root" location=".."/>
+<property name="iweb2.build.dir" value="${iweb2.root}/build"/>
+<property name="iweb2.src" value="${iweb2.root}/src"/>
+<property name="iweb2.test" value="${iweb2.root}/test"/>
+<property name="iweb2.classes" value="${iweb2.build.dir}/bytecode"/>
+<property name="iweb2.javadoc" value="${iweb2.root}/docs/javadoc"/>
+<property name="iweb2.lib" value="${iweb2.root}/lib"/>
+<property name="iweb2.distro" value="${iweb2.build.dir}/dist"/>
+<property name="iweb2.deploy" value="${iweb2.root}/deploy"/>
+<property name="iweb2.deploy.lib" value="${iweb2.deploy}/lib"/>
+<property name="log.dir" value="${iweb2.root}/log"/>
+<property name="data.dir" value="${iweb2.root}/data"/>
+<property name="temp.dir" value="${iweb2.root}/temp"/>
+<property name="tools.dir" value="${iweb2.root}/tools"/>
+
+
+<property environment="env"/>
+
+<!-- list of all jars that are currently used in iweb2 app -->
+<patternset id="thirdparty.jars">
+  <include name="commons-codec-1.3.jar"/>
+  <include name="commons-httpclient-3.1.jar"/>
+  <include name="commons-lang-2.3.jar"/>
+  <include name="commons-logging-1.1.1.jar"/>
+  <include name="f2jutil.jar"/>
+  <include name="jfreechart.jar"/>
+  <include name="jigg-0.1.jar"/>
+  <include name="rooster.jar"/>
+  <include name="junit-4.1.jar"/>
+  <include name="log4j.jar"/>
+  <include name="lucene-analyzers-2.3.0.jar"/>
+  <include name="lucene-core-2.3.0.jar"/>
+  <include name="lucene-demos-2.3.0.jar"/>
+  <include name="lucene-memory-2.3.0.jar"/>
+  <include name="nekohtml.jar"/>
+  <include name="poi-3.0.2-FINAL-20080204.jar"/>
+  <include name="resolver.jar"/>
+  <include name="secondstring-20070327.jar"/>
+  <include name="serializer.jar"/>
+  <include name="tm-extractors-1.0.jar"/>
+  <include name="SuperCSV-1.16.jar"/>
+  <include name="xercesImpl.jar"/>
+  <include name="xml-apis.jar"/>
+  <include name="jgraph.jar"/>
+  <include name="bsh-2.0b4.jar"/>
+  <!-- for Drools -->
+  <include name="drools-compiler-4.0.4.jar"/>
+  <include name="drools-core-4.0.4.jar"/>
+  <include name="antlr-runtime-3.0.jar"/>
+  <include name="janino-2.5.10.jar"/>
+  <include name="mvel14-1.2.21.jar"/>
+</patternset>
+
+<!-- Compilation Classpath -->
+<path id="compile.classpath">
+  <fileset dir="${iweb2.lib}">
+    <patternset refid="thirdparty.jars"/>
+  </fileset>
+</path>
+
+<!-- Javadoc Sourcepath -->
+<path id="javadoc.sourcepath">
+  <fileset dir="${iweb2.src}">
+    <include name="**/*.java"/>
+  </fileset>
+</path>
+
+
+<target name="init">
+  <!-- Create the time stamp -->
+  <tstamp>
+    <format property="year" pattern="yyyy" />
+  </tstamp>
+  <!-- Create the build directory structure used by compile -->
+  <mkdir dir="${iweb2.classes}"/>
+  <mkdir dir="${temp.dir}"/>
+  <mkdir dir="${log.dir}"/>
+ <echo message="------------------- ${project.Name} ----------------------"/>
+ <echo message=""/>
+ <echo message="PATH = ${env.PATH}"/>
+ <echo message="CLASSPATH = ${env.CLASSPATH}"/>
+ <echo message="java.home = ${env.JAVA_HOME}"/>
+ <echo message="ant.home = ${env.ANT_HOME}"/>
+ <echo message="------------------------------------------------------"/>
+ <echo message=""/>
+ <echo message="root: ${iweb2.root}"/>
+ <echo message="build: ${iweb2.build.dir}"/>
+ <echo message="deploy: ${iweb2.deploy}"/>
+
+ <!-- check that build was started with empty classpath -->
+ <condition property="CLASSPATH.ok">
+     <not>
+       <isset property="env.CLASSPATH"/>
+     </not>
+  </condition> 
+
+ <!-- feel free to remove this check if you are confident that configured classpath won't cause any issues. -->
+ <fail message="You have CLASSPATH set in your environment. This may cause issues while running build." unless="CLASSPATH.ok"/>
+
+</target>
+
+
+
+ <!-- Build everything from scratch.  -->
+  <target name="all" depends="dist,docs">
+    <echo message="All the source code has been compiled and the javadocs were created." />
+  </target>
+
+<!-- Compile the java code into bytecode -->
+<target name="compile" depends="init">
+  <javac srcdir="${iweb2.src};${iweb2.test}"
+         destdir="${iweb2.classes}"
+	 fork="true"
+         debug="on"
+         optimize="off"
+         deprecation="on"
+	 failonerror="true">
+     <classpath refid="compile.classpath"/>
+  </javac>
+</target>
+
+
+<target name="tc" depends="tidy,dist" description="Clean up everything before compiling"/>
+
+	<!-- Default target -->
+<target name="dist" depends="compile">
+
+  <mkdir dir="${iweb2.distro}"/>
+
+
+  <!-- Put everything in ${iweb2.classes} into the JAR file -->
+  <jar jarfile="${iweb2.distro}/iweb2.jar" basedir="${iweb2.classes}" update="true">
+    <manifest>
+      
+      <section name="common">
+        <attribute name="Implementation-Title" value="Iweb2"/>
+        <attribute name="Implementation-Version" value="1.0.0.0 ${TODAY}"/> 
+        <attribute name="Implementation-Vendor" value=""/>
+      </section>
+    </manifest>
+  </jar>
+
+  <copy file="${iweb2.distro}/iweb2.jar" todir="${iweb2.deploy.lib}" />
+  <copy todir="${iweb2.deploy.lib}">
+    <fileset dir="${iweb2.lib}">
+      <patternset refid="thirdparty.jars"/>
+    </fileset>
+  </copy>
+
+  <echo message="The iweb2.jar has been created and placed in ${iweb2.deploy.lib}" />
+
+</target>
+
+ <!--
+       ===================================================================
+         Cleans up build and distribution directories
+       ===================================================================
+  -->
+<target name="clean"
+          description="--> cleans up iweb2.classes and dist directories, if any.">
+  <delete dir="${iweb2.classes}"/>
+  <delete dir="${iweb2.distro}" />
+  <delete file="${iweb2.deploy.lib}/iweb2.jar"/>
+  <delete>
+    <fileset dir="${iweb2.deploy.lib}">
+      <patternset refid="thirdparty.jars"/>
+      <exclude name="bsh-2.0b4.jar"/>
+    </fileset>
+  </delete>
+</target>
+
+<!--
+       ===================================================================
+         Cleans bytecode and old source files
+       ===================================================================
+  -->
+<target name="clean-all"
+          depends="clean"
+          description="--> cleans up bytecode, distros, and old source files">
+
+  <delete dir="${iweb2.distro}" />
+  <delete> <fileset dir="${basedir}" includes="**/*~" defaultexcludes="no"/> </delete>
+  <delete> <fileset dir="${iweb2.src}" includes="**/*~" defaultexcludes="no"/> </delete>
+  <delete> <fileset dir="${iweb2.src}" includes="**/*.bak" defaultexcludes="no"/> </delete>
+  <delete> <fileset dir="." includes="**/*.jar" defaultexcludes="no"/> </delete>
+</target>
+
+<!--
+       ===================================================================
+         Cleans everything
+       ===================================================================
+  -->
+<target name="tidy"
+          depends="clean-all"
+          description="--> cleans up everything">
+  <delete dir="${iweb2.javadoc}/ch2" />
+  <delete dir="${iweb2.javadoc}/ch3" />
+  <delete dir="${iweb2.javadoc}/ch4" />
+  <delete dir="${iweb2.javadoc}/ch5" />
+  <delete dir="${iweb2.javadoc}/ch6" />
+  <delete dir="${iweb2.javadoc}/ch7" />
+  <delete dir="${iweb2.javadoc}/util" />
+  <delete> <fileset dir="." includes="**/*~" defaultexcludes="no"/> </delete>
+</target>
+
+
+ <!--
+       ===================================================================
+         Creates the API documentation
+       ===================================================================
+  -->
+<target name="docs" depends="init" description="--> creates the API documentation for iweb2">
+  
+<!-- Chapter 2 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch2"/>
+  
+  <mkdir dir="${iweb2.javadoc}/ch2"/>
+
+  <javadoc packagenames="iweb2.ch2.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch2"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 2 -- Core" packages="iweb2.ch2.cliks, iweb2.ch2.data,iweb2.ch2.lucene, iweb2.ch2.ranking"/>
+    <group title="Chapter 2 -- Web Crawler" packages="iweb2.ch2.w*"/>
+    <group title="Chapter 2 -- Utilities" packages="iweb2.ch2.shell"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+
+<!-- Chapter 3 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch3"/>
+  <mkdir  dir="${iweb2.javadoc}/ch3"/>
+
+  <javadoc packagenames="iweb2.ch3.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch3"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 3 -- Collaborative Filtering" packages="iweb2.ch3.collaborative.*"/>
+    <group title="Chapter 3 -- Content" packages="iweb2.ch3.content.*"/>
+    <group title="Chapter 3 -- Utilities" packages="iweb2.ch3.shell"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+ 
+<!-- Chapter 4 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch4"/>
+  <mkdir  dir="${iweb2.javadoc}/ch4"/>
+
+  <javadoc packagenames="iweb2.ch4.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch4"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 4 -- Core" packages="iweb2.ch4.data, iweb2.ch4.model, iweb2.ch4.similarity"/>
+    <group title="Chapter 4 -- Clustering" packages="iweb2.ch2.w*"/>
+    <group title="Chapter 4 -- Utilities" packages="iweb2.ch4.utils"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+
+<!-- Chapter 5 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch5"/>
+  <mkdir  dir="${iweb2.javadoc}/ch5"/>
+
+ <javadoc packagenames="iweb2.ch5.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch5"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 5" packages="iweb2.ch5.*"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+
+<!-- Chapter 6 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch6"/>
+  <mkdir  dir="${iweb2.javadoc}/ch6"/>
+
+ <javadoc packagenames="iweb2.ch6.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch6"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 6" packages="iweb2.ch6"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+
+<!-- Chapter 7 -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/ch7"/>
+  <mkdir  dir="${iweb2.javadoc}/ch7"/>
+
+ <javadoc packagenames="iweb2.ch7.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/ch7"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="Chapter 7" packages="iweb2.ch7"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+
+<!-- Utilities -->
+  <echo message="Removing the old and creating a new Javadoc folder ..." />
+
+  <delete dir="${iweb2.javadoc}/util"/>
+  <mkdir  dir="${iweb2.javadoc}/util"/>
+
+ <javadoc packagenames="iweb2.util.*"
+         sourcepath="${iweb2.src}"
+         destdir="${iweb2.javadoc}/util"
+	     author="true"
+         version="true"
+         use="true"
+         windowtitle="${project.Name} API">
+
+    <doctitle><![CDATA[<h1>${project.Name}</h1>]]></doctitle>
+    <bottom><![CDATA[<i>Copyright &#169; 2007-2009 Haralambos Marmanis &amp; Dmitry Babenko</i>]]></bottom>
+    <classpath refid="compile.classpath"/>
+    <tag name="todo" scope="all" description="To do:"/>
+    <group title="General Utilities" packages="iweb2.util.*"/>
+    <link href="http://code.google.com/p/yooreeka/"/>
+ </javadoc>
+ 
+  <echo message="docs build complete" />
+</target>
+
+<!-- ========================================================== -->
+
+  <target name="prepare-test-data" depends="init">
+     <!-- empty for now. --> 
+  </target>
+
+  <target name="test" depends="compile,prepare-test-data">
+    <!--
+    To run specific test or group of tests use: 
+    ant test -Dtest=DataSetTest
+    ant test -Dtest=*TestExt
+    -->
+    <junit fork="yes" tempdir="${temp.dir}"
+      errorProperty="test.failed"
+      failureProperty="test.failed"
+      reloading="false">
+      <jvmarg value="-Xmx1024M"/>
+      <sysproperty key="data.dir" file="${data.dir}"/>
+      <sysproperty key="temp.dir" file="${temp.dir}"/>
+      <!--
+      <sysproperty key="log4j.debug" value=""/>
+      -->
+      <classpath>
+        <pathelement location="${iweb2.classes}"/>
+		<pathelement location="${iweb2.deploy}/conf"/>
+        <path refid="compile.classpath"/>
+      </classpath>
+      <formatter type="brief" usefile="false"/>
+      <batchtest if="test">
+        <fileset dir="${iweb2.classes}" includes="iweb2/**/${test}.class"/>
+      </batchtest>
+      <batchtest unless="test">
+        <fileset dir="${iweb2.classes}" includes="iweb2/**/*Test.class"/>
+      </batchtest>
+    </junit>
+    <fail if="test.failed">Test(s) failed!!!</fail>
+  </target>
+</project>
+
