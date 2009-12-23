@@ -1,0 +1,4 @@
+# ignore build and deploy files
+build/bytecode/
+build/dist/
+deploy/lib/
