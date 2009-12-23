@@ -1,6 +1,41 @@
 ------------------------------------------------------------------------------
-Quick start for running book examples on Windows platform
+Quick start for running book examples
 ------------------------------------------------------------------------------
+
+----------------
+Linux, Mac OS X
+----------------
+
+1. Ensure java and ant are installed.
+
+> which java; which ant
+/usr/bin/java
+/usr/bin/ant
+
+2. Build using ant
+
+> cd build
+> ant
+
+Buildfile: build.xml
+
+init:
+ ...
+BUILD SUCCESSFUL
+Total time: 10 seconds
+
+3. Run Beanshell
+
+> cd ../deploy/bin/
+> ./bsc.sh
+Start ClassPath Mapping
+ ...
+BeanShell 2.0b4 - by Pat Niemeyer (pat@pat.net)
+bsh % 
+
+--------
+Windows
+--------
 
 1. Verify your environment
 
